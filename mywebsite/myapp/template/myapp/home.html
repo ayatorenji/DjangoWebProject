@@ -16,19 +16,25 @@
 {% endblock myheader %}
 
 {% block content %}
-
-    <center>
       {% for data in pd %}
-        <h1>{{ data.title }}</h1>
+      <center> <h1>{{ data.title }}</h1> </center>
         <p>
-          {{ data.image }}<br>
+          <center>
+          {% if data.image %}
+            <img src="{{ data.image.url }}" alt="{{ data.title }} image" style="height: 300px; width: 500px;">
+          {% else %}
+          <p>No image available</p>
+          {% endif %}
+          <br>
+          </center>
+
           {{ data.description}}<br>
           price : {{ data.price }}<br>
           stock : {{ data.quantity }}<br>
+          <a href="{% url 'add-to-cart' data.id %}" class="btn btn-primary">Add to Cart</a>
         </p>
         <hr>
         {% endfor %}
-    </center>
 
 {% endblock content %}
 <!doctype html>

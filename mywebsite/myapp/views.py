@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 
 from django.http import HttpResponse
 
@@ -138,3 +138,62 @@ def editProfile(request):
             context['message'] = "edit profile fail"
 
     return render(request, 'myapp/editprofile.html', context)
+
+def add_to_cart(request, product_id):
+    product = Product.objects.get(id=product_id)
+    cart, created = Cart.objects.get_or_create(user=request.user, product=product, submitted=False)
+    if not created:
+        cart.quantity += 1
+    cart.save()
+    return redirect('home-page')
+
+def cart_review(request):
+    cart_items = Cart.objects.filter(user=request.user, submitted=False)
+    if request.method == 'POST':
+        cart_items.update(submitted=True)
+        return redirect('home-page')
+    return render(request, 'myapp/cart_review.html', {'cart_items': cart_items})
+
+def admin_cart_review(request):
+    if not request.user.is_staff:
+        return redirect('home-page')  # Redirect non-admins to home page
+
+    carts = Cart.objects.filter(submitted=True)
+    return render(request, 'myapp/admin_cart_review.html', {'carts': carts})
+
+def update_cart(request):
+    if request.method == 'POST':
+        if 'update_cart' in request.POST:
+            for key, value in request.POST.items():
+                if key.startswith('quantity_'):
+                    parts = key.split('_')
+                    if len(parts) > 2:
+                        cart_id = parts[2]
+                        try:
+                            cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
+                            cart_item.quantity = min(int(value), cart_item.product.quantity)
+                            cart_item.save()
+                        except ValueError:
+                            continue
+        elif 'delete_item' in request.POST:
+            cart_id = request.POST['delete_item']
+            cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
+            cart_item.delete()
+        elif 'submit_cart' in request.POST:
+            for item in Cart.objects.filter(user=request.user, submitted=False):
+                if item.quantity > item.product.quantity:
+                    # Handle error: not enough stock
+                    return redirect('cart-review-with-error')  # Create a URL and view to handle this scenario
+                item.submitted = True
+                item.status = 'Waiting'
+                item.save()
+            return redirect('cart-review')
+    return redirect('cart-review')
+
+def update_cart_status(request, cart_id):
+    cart = get_object_or_404(Cart, id=cart_id)
+    if request.method == 'POST':
+        cart.status = request.POST.get('status')
+        cart.save()
+        return redirect('admin-cart-review')
+    return render(request, 'myapp/update_cart_status.html', {'cart': cart})

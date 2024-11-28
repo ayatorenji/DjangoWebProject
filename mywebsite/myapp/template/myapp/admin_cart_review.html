@@ -1,0 +1,11 @@
+{% extends 'myapp/base.html' %}
+{% block content %}
+<h1>Cart Submissions</h1>
+<ul>
+  {% for cart in carts %}
+  <li>{{ cart.user.username }} - {{ cart.product.title }} - {{ cart.quantity }} - {{ cart.status }}
+      <a href="{% url 'update-cart-status' cart.id %}">Update Status</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

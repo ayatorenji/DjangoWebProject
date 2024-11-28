@@ -1,0 +1,23 @@
+{% extends 'myapp/base.html' %}
+
+{% block content %}
+    <h1>Your Cart</h1>
+    {% if cart_items %}
+        <form method="post" action="{% url 'update-cart' %}">
+            {% csrf_token %}
+            <ul>
+                {% for item in cart_items %}
+                <li>
+                    {{ item.product.title }} - 
+                    <input type="number" name="quantity_{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.product.quantity }}">
+                    <button type="submit" name="delete_item" value="{{ item.id }}">Remove</button>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="submit" name="update_cart">Update Cart</button>
+            <button type="submit" name="submit_cart">Submit for Review</button>
+        </form>
+    {% else %}
+        <p>Your cart is empty.</p>
+    {% endif %}
+{% endblock %}
